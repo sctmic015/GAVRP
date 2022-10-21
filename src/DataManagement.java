@@ -18,20 +18,22 @@ public class DataManagement {
         String line;
         int count = 0;
         String cityName = "depot";
+        double demandSum = 0;
         while ((line = br.readLine())!= null){
             String[] info = line.split("\s+");
             System.out.println(Arrays.toString(info));
             List<Double> coordinatesXY = new ArrayList<>();
             coordinatesXY.add(Double.parseDouble(info[2]));
             coordinatesXY.add(Double.parseDouble(info[3]));
+            demandSum += Double.parseDouble(info[4]);
             if (count > 0){
                 cityName = "c" + count;
             }
-            City city = new City(coordinatesXY, (int) (Double.parseDouble(info[4])), cityName);
+            City city = new City(coordinatesXY, (int) Double.parseDouble(info[4]), cityName, (int) Double.parseDouble(info[5]), (int) (Double.parseDouble(info[6])), (int) (Double.parseDouble(info[7])));
             Configuration.INSTANCE.cities.put(count, city);
             count++;
         }
-
+        System.out.println(demandSum);
         Configuration.INSTANCE.countCities = Configuration.INSTANCE.cities.size() - 1;
         Configuration.INSTANCE.initDistanceMatrix();
     }

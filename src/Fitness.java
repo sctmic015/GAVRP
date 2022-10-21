@@ -6,6 +6,8 @@ public class Fitness {
     public static void evaluate(Route route) {
         double currentDistance = 0;
         int currentDemand;
+        double orderPenalty;
+        double capacityPenalty;
 
         for (Gene gene : route.getGenes()) {
             int tempVehicleCapacity = Configuration.INSTANCE.vehicleCapacity;

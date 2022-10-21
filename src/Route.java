@@ -3,11 +3,13 @@ import java.util.List;
 
 public class Route {
     private List<Gene> genes;
+    // Think a route will have an associated fitness
     private double fitness;
 
     public Route() {
     }
 
+    // Build A route
     public static Route build(List<Integer> cityIndexList) {
         List<Gene> tempGenes = new ArrayList<>();
         Route route = new Route();
@@ -15,6 +17,7 @@ public class Route {
 
         for (int k = 0; k < Configuration.INSTANCE.vehicleQuantity; k++) {
             List<Integer> genes = new ArrayList<>();
+            // Simply populates each gene removing the first item from the global list in the process
             for (int j = 0; j < n; j++) {
                 if (j == n - 1 && k == Configuration.INSTANCE.vehicleQuantity - 1) {
                     for (int l = 0; l < Configuration.INSTANCE.countCities % Configuration.INSTANCE.vehicleQuantity; l++) {
