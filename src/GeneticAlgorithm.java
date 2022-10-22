@@ -178,6 +178,67 @@ public class GeneticAlgorithm {
 
     }
     // Think it swaps on the outsides of the start and end index. Pretty sure Partially Matched crossover
+
+    private List<Route> orderedCrossover(List<Route> routes){
+        Collections.shuffle(routes);
+        List<Route> children = new ArrayList<>();
+
+        for (int i = 0; i < routes.size(); i +=2) {
+            if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.crossoverRate) {
+                countCrossover++;
+                List<Integer> parent01 = new ArrayList<>();
+                List<Integer> parent02 = new ArrayList<>();
+
+                // Puts all genes back into a big list
+                for (Gene gene : routes.get(i).getGenes()) {
+                    parent01.addAll(gene.getRoute());
+                }
+
+                for (Gene gene : routes.get(i + 1).getGenes()) {
+                    parent02.addAll(gene.getRoute());
+                }
+
+                // Just creates the template for the child with the 10 city buckets
+                List<Integer> tempChild01 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
+                List<Integer> tempChild02 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
+
+                // Two random integers
+                int upperBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size());
+                int lowerBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size() - 1);
+
+                // Essentially actually get upper and lower bound
+                int start = Math.min(upperBound, lowerBound);
+                int end = Math.max(upperBound, lowerBound);
+
+                List<Integer> parent01Genes = new ArrayList<>(parent01.subList(start, end));
+                List<Integer> parent02Genes = new ArrayList<>(parent02.subList(start, end));
+
+                // Adds parent 1 and two genes into the middle of the child genes
+                tempChild01.addAll(start, parent01Genes);
+                tempChild02.addAll(start, parent02Genes);
+
+                // Remove parent each parents selected genes from each other
+                for (int j = 0; j <= parent01Genes.size() - 1; j++) {
+                    parent01.remove(parent02Genes.get(j));
+                    parent02.remove(parent01Genes.get(j));
+                }
+
+                int index = 0;
+                for (int z = 0; z < parent01.size(); z++) {
+                    index = (end + z) % (Configuration.INSTANCE.countCities);
+                    tempChild01.set(index, parent02.get(z));
+                    tempChild02.set(index, parent01.get(z));
+                }
+
+                Route child01CityRoute = Route.build(tempChild01);
+                Route child02CityRoute = Route.build(tempChild02);
+
+                children.add(child01CityRoute);
+                children.add(child02CityRoute);
+            }
+        }
+        return children;
+    }
     private List<Route> crossover(List<Route> routes) {
         Collections.shuffle(routes);
         List<Route> children = new ArrayList<>();

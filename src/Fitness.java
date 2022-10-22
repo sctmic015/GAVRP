@@ -6,13 +6,17 @@ public class Fitness {
     public static void evaluate(Route route) {
         double currentDistance = 0;
         int currentDemand;
+        int currentStartTime;
+        int currentEndTime;
+        int currentServiceTime;
+        int currentTime;
         double orderPenalty;
         double capacityPenalty;
 
         for (Gene gene : route.getGenes()) {
             int tempVehicleCapacity = Configuration.INSTANCE.vehicleCapacity;
             int listSize = gene.getRoute().size() - 1;
-
+            currentTime=0;
             for (int i = 0; i < listSize; i++) {
                 if (i == 0) {
                     currentDistance += Configuration.INSTANCE.distanceMatrix.get(0).get(gene.getRoute().get(0));
@@ -20,7 +24,17 @@ public class Fitness {
                     currentDistance += Configuration.INSTANCE.distanceMatrix.get(gene.getRoute().get(i - 1)).get(gene.getRoute().get(i));
                 }
 
-                currentDemand = Configuration.INSTANCE.cities.get(i).getDemand();
+                currentDemand = Configuration.INSTANCE.cities.get(gene.getRoute().get(i)).getDemand();
+                currentStartTime = Configuration.INSTANCE.cities.get(gene.getRoute().get(i)).readyTime();
+                currentEndTime = Configuration.INSTANCE.cities.get(gene.getRoute().get(i)).dueDate();
+                currentServiceTime = Configuration.INSTANCE.cities.get(gene.getRoute().get(i)).serviceTime();
+                if (currentTime < currentStartTime){
+                    currentTime = currentStartTime + currentServiceTime;
+                }
+                else {
+                    currentDistance += currentTime - currentStartTime;
+                    currentTime +=10;
+                }
 
                 while (currentDemand > 0) {
                     if (tempVehicleCapacity - currentDemand < 0) {
@@ -33,6 +47,7 @@ public class Fitness {
                         currentDemand = 0;
                     }
                 }
+
             }
 
             currentDistance += Configuration.INSTANCE.distanceMatrix.get(gene.getRoute().get(listSize)).get(0);
