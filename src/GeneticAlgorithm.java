@@ -77,7 +77,7 @@ public class GeneticAlgorithm {
             List<Route> matingPool = tournamentSelect(routes, 2, Configuration.INSTANCE.truncationNumber);
             //System.out.println("Mating Pool Size: " + matingPool.size());
 
-            List<Route> children = crossover(matingPool);
+            List<Route> children = orderCrossover(matingPool);
             mutate(children);
 
             // Simply removes the 250 worst chromosomes. Can also change
@@ -179,17 +179,78 @@ public class GeneticAlgorithm {
     }
     // Think it swaps on the outsides of the start and end index. Pretty sure Partially Matched crossover
 
-    private List<Route> orderedCrossover(List<Route> routes){
+//    private List<Route> orderedCrossover(List<Route> routes){
+//        Collections.shuffle(routes);
+//        List<Route> children = new ArrayList<>();
+//
+//        for (int i = 0; i < routes.size(); i +=2) {
+//            if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.crossoverRate) {
+//                countCrossover++;
+//                List<Integer> parent01 = new ArrayList<>();
+//                List<Integer> parent02 = new ArrayList<>();
+//
+//                // Puts all genes back into a big list
+//                for (Gene gene : routes.get(i).getGenes()) {
+//                    parent01.addAll(gene.getRoute());
+//                }
+//
+//                for (Gene gene : routes.get(i + 1).getGenes()) {
+//                    parent02.addAll(gene.getRoute());
+//                }
+//
+//                // Just creates the template for the child with the 10 city buckets
+//                List<Integer> tempChild01 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
+//                List<Integer> tempChild02 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
+//
+//                // Two random integers
+//                int upperBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size());
+//                int lowerBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size() - 1);
+//
+//                // Essentially actually get upper and lower bound
+//                int start = Math.min(upperBound, lowerBound);
+//                int end = Math.max(upperBound, lowerBound);
+//
+//                List<Integer> parent01Genes = new ArrayList<>(parent01.subList(start, end));
+//                List<Integer> parent02Genes = new ArrayList<>(parent02.subList(start, end));
+//
+//                // Adds parent 1 and two genes into the middle of the child genes
+//                tempChild01.addAll(start, parent01Genes);
+//                tempChild02.addAll(start, parent02Genes);
+//
+//                // Remove parent each parents selected genes from each other
+//                for (int j = 0; j <= parent01Genes.size() - 1; j++) {
+//                    parent01.remove(parent02Genes.get(j));
+//                    parent02.remove(parent01Genes.get(j));
+//                }
+//
+//                int index = 0;
+//                for (int z = 0; z < parent01.size(); z++) {
+//                    index = (end + z) % (Configuration.INSTANCE.countCities);
+//                    tempChild01.set(index, parent02.get(z));
+//                    tempChild02.set(index, parent01.get(z));
+//                }
+//
+//                Route child01CityRoute = Route.build(tempChild01);
+//                Route child02CityRoute = Route.build(tempChild02);
+//
+//                children.add(child01CityRoute);
+//                children.add(child02CityRoute);
+//            }
+//        }
+//        return children;
+//    }
+
+    private List<Route> orderCrossover(List<Route> routes){
         Collections.shuffle(routes);
         List<Route> children = new ArrayList<>();
 
-        for (int i = 0; i < routes.size(); i +=2) {
+        for (int i = 0; i < routes.size(); i += 2) {
             if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.crossoverRate) {
                 countCrossover++;
+
                 List<Integer> parent01 = new ArrayList<>();
                 List<Integer> parent02 = new ArrayList<>();
 
-                // Puts all genes back into a big list
                 for (Gene gene : routes.get(i).getGenes()) {
                     parent01.addAll(gene.getRoute());
                 }
@@ -198,43 +259,57 @@ public class GeneticAlgorithm {
                     parent02.addAll(gene.getRoute());
                 }
 
-                // Just creates the template for the child with the 10 city buckets
-                List<Integer> tempChild01 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
-                List<Integer> tempChild02 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
+                List<Integer> child01 = new ArrayList<>();
+                List<Integer> child02 = new ArrayList<>();
 
-                // Two random integers
-                int upperBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size());
-                int lowerBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size() - 1);
+                //crossover points
+                int crossPoint1 = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * Configuration.INSTANCE.countCities);
+                int crossPoint2 = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * Configuration.INSTANCE.countCities);
 
-                // Essentially actually get upper and lower bound
-                int start = Math.min(upperBound, lowerBound);
-                int end = Math.max(upperBound, lowerBound);
-
-                List<Integer> parent01Genes = new ArrayList<>(parent01.subList(start, end));
-                List<Integer> parent02Genes = new ArrayList<>(parent02.subList(start, end));
-
-                // Adds parent 1 and two genes into the middle of the child genes
-                tempChild01.addAll(start, parent01Genes);
-                tempChild02.addAll(start, parent02Genes);
-
-                // Remove parent each parents selected genes from each other
-                for (int j = 0; j <= parent01Genes.size() - 1; j++) {
-                    parent01.remove(parent02Genes.get(j));
-                    parent02.remove(parent01Genes.get(j));
+                //order cross points
+                if (crossPoint1 > crossPoint2) {
+                    int temp = crossPoint1;
+                    crossPoint1 = crossPoint2;
+                    crossPoint2 = temp;
                 }
 
-                int index = 0;
-                for (int z = 0; z < parent01.size(); z++) {
-                    index = (end + z) % (Configuration.INSTANCE.countCities);
-                    tempChild01.set(index, parent02.get(z));
-                    tempChild02.set(index, parent01.get(z));
+                //add first parent genes to each child
+
+                child01.addAll(parent01.subList(crossPoint1, crossPoint2));
+                child02.addAll(parent02.subList(crossPoint1, crossPoint2));
+
+                final int size = parent02.size();
+
+                //tracks position of current customer in children
+                int currentIndex = 0;
+                int currentCustomerInParent1 = 0;
+                int currentCustomerInParent2 = 0;
+
+                for (int j = 0; j < size; j++) {
+                    currentIndex = (crossPoint2 + j) % size; // wraps around to beginning of list after crossing endpoint
+
+                    // get the customer at the current index in each parent
+                    currentCustomerInParent1 = parent01.get(currentIndex);
+                    currentCustomerInParent2 = parent02.get(currentIndex);
+
+                    // if child 1 does not already contain the current customer in parent 2, add it
+                    if (!child01.contains(currentCustomerInParent2)) {
+                        child01.add(currentCustomerInParent2);
+                    }
+
+                    // if child 2 does not already contain the current customer in parent 1, add it
+                    if (!child02.contains(currentCustomerInParent1)) {
+                        child02.add(currentCustomerInParent1);
+                    }
                 }
-
-                Route child01CityRoute = Route.build(tempChild01);
-                Route child02CityRoute = Route.build(tempChild02);
-
-                children.add(child01CityRoute);
+                //i rotate the children to allign the segments from the cross over to the original points
+                //i.e, the start of the children (the original segment) is shifted to the index of the first cross over
+                Collections.rotate(child01, crossPoint1);
+                Collections.rotate(child02, crossPoint1);
+                Route child01CityRoute = Route.build(child01);
+                Route child02CityRoute = Route.build(child02);
                 children.add(child02CityRoute);
+                children.add(child01CityRoute);
             }
         }
         return children;

@@ -32,7 +32,7 @@ public class Fitness {
                     currentTime = currentStartTime + currentServiceTime;
                 }
                 else {
-                    currentDistance += currentTime - currentStartTime;
+                    currentDistance += 0.15 * (currentTime - currentStartTime);
                     currentTime +=10;
                 }
 

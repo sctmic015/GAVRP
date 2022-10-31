@@ -21,7 +21,7 @@ public enum Configuration {
     public final int populationQuantity = 2250;
     public final int maximumCountGeneration = 10000;
     public final double crossoverRate = 0.7;
-    public final double mutationRate = 0.03;
+    public final double mutationRate = 0.003;
     public final int truncationNumber = 250;
     public int countCities = 0;
     public List<List<Double>> distanceMatrix;
