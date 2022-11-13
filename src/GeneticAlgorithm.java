@@ -141,7 +141,7 @@ public class GeneticAlgorithm extends Thread{
         System.out.println("countMutation  | " + countMutation);
         if (threaded){
             output.add(Configuration.populationQuantity + ", " + Configuration.crossoverRate + ", " +
-            Configuration.mutationRate + ", " + Configuration.tournamentSize + ", " +
+            Configuration.mutationRate + ", " + Configuration.tournamentSize + ", " + Configuration.elitism + ", " +
             bestFitness);
         }
     }

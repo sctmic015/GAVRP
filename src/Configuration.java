@@ -17,7 +17,7 @@ public class Configuration {
     public final int vehicleCapacity = 200;
     // genetic algorithm
     public int populationQuantity = 3500;
-    public final int maximumCountGeneration = 1;
+    public final int maximumCountGeneration = 10000;
     public double crossoverRate = 0.7;
     public double mutationRate = 0.01;
     public final int truncationNumber = (int) (populationQuantity * 0.5);
@@ -35,11 +35,12 @@ public class Configuration {
 
     }
 
-    public Configuration(int populationQuantity, double crossoverRate, double mutationRate, int tournamentSize){
+    public Configuration(int populationQuantity, double crossoverRate, double mutationRate, int tournamentSize, double elitism){
         this.populationQuantity = populationQuantity;
         this.crossoverRate = crossoverRate;
         this.mutationRate = mutationRate;
         this.tournamentSize = tournamentSize;
+        this.elitism = elitism;
     }
 
 }

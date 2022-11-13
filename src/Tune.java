@@ -10,19 +10,23 @@ public class Tune {
     static ArrayList<Double> mutationParams = new ArrayList<>(Arrays.asList(0.001, 0.005, 0.01, 0.015, 0.02));
     static ArrayList<Integer> tournamentSize = new ArrayList<>(Arrays.asList(2, 5, 10));
     static ArrayList<Integer> popSize = new ArrayList<>(Arrays.asList(2500, 3000, 3500));
+
+    static ArrayList<Double> elitism = new ArrayList<>(Arrays.asList(0.0, 0.2, 0.4, 0.6));
     static ArrayList<Thread> threadList = new ArrayList<Thread>();
 
     public static void main(String[] args) throws IOException, InterruptedException {
         int startTime = (int) System.currentTimeMillis();
         FileWriter writer = new FileWriter("tuning.csv");
-        writer.write("Population Size, CrossOver Rate, Mutation Rate, Tournament Size, Best Fitness\n");
+        writer.write("Population Size, CrossOver Rate, Mutation Rate, Tournament Size, Best Fitness, Elitism\n");
         for (Integer popSize:popSize){
             for (Double crossOver:crossOverParams){
                 for (Double mutation:mutationParams){
                     for (Integer tournament:tournamentSize){
-                        Configuration configuration = new Configuration(popSize.intValue(), crossOver.doubleValue(), mutation.doubleValue(), tournament.intValue());
-                        GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(configuration);
-                        threadList.add(new Thread(geneticAlgorithm));
+                        for (Double elitism:elitism) {
+                            Configuration configuration = new Configuration(popSize.intValue(), crossOver.doubleValue(), mutation.doubleValue(), tournament.intValue(), elitism.doubleValue());
+                            GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(configuration);
+                            threadList.add(new Thread(geneticAlgorithm));
+                        }
                     }
                 }
             }
