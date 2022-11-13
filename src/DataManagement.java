@@ -8,11 +8,12 @@ import java.util.List;
 
 // Class that simply loads in the data from the text file
 public class DataManagement {
+
     private DataManagement() {
     }
 
-    public static void readData() throws IOException {
-        File file = new File(Configuration.INSTANCE.path);
+    public static void readData(Configuration Configuration) throws IOException {
+        File file = new File(Configuration.path);
         BufferedReader br = new BufferedReader(new FileReader(file));
         br.readLine();
         String line;
@@ -30,34 +31,31 @@ public class DataManagement {
                 cityName = "c" + count;
             }
             City city = new City(coordinatesXY, (int) Double.parseDouble(info[4]), cityName, (int) Double.parseDouble(info[5]), (int) (Double.parseDouble(info[6])), (int) (Double.parseDouble(info[7])));
-            Configuration.INSTANCE.cities.put(count, city);
+            Configuration.cities.put(count, city);
             count++;
         }
         System.out.println(demandSum);
-        Configuration.INSTANCE.countCities = Configuration.INSTANCE.cities.size() - 1;
-        Configuration.INSTANCE.initDistanceMatrix();
+        Configuration.countCities = Configuration.cities.size() - 1;
+        Configuration.initDistanceMatrix();
     }
 
 //    public static void readData() {
 //        try {
-//            Files.lines(Path.of(Configuration.INSTANCE.path)).forEach(line ->
+//            Files.lines(Path.of(Configuration.path)).forEach(line ->
 //            {
 //                List<Double> coordinatesXY = new ArrayList<>();
 //                String[] tempStringArray = line.split((";"));
 //                coordinatesXY.add(Double.parseDouble(tempStringArray[2]));
 //                coordinatesXY.add(Double.parseDouble(tempStringArray[3]));
 //                City city = new City(coordinatesXY, Integer.parseInt(tempStringArray[4]), tempStringArray[1]);
-//                Configuration.INSTANCE.cities.put(Integer.parseInt(tempStringArray[0]), city);
+//                Configuration.cities.put(Integer.parseInt(tempStringArray[0]), city);
 //            });
 //
-//            Configuration.INSTANCE.countCities = Configuration.INSTANCE.cities.size() - 1;
-//            Configuration.INSTANCE.initDistanceMatrix();
+//            Configuration.countCities = Configuration.cities.size() - 1;
+//            Configuration.initDistanceMatrix();
 //        } catch (IOException ioe) {
 //            ioe.printStackTrace();
 //        }
 //    }
-    public static void main(String[] args) throws IOException {
-        readData();
-    }
 
 }

@@ -4,7 +4,8 @@ import java.io.IOException;
 public class Application {
     public static void main(String... args) throws IOException {
         final long startTime = System.currentTimeMillis();
-        GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm();
+        Configuration configuration = new Configuration();
+        GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(configuration);
         geneticAlgorithm.execute();
         final long endTime = System.currentTimeMillis();
         System.out.println("Time to run: " + (endTime - startTime));

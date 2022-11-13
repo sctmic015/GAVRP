@@ -10,7 +10,7 @@ DOCDIR=doc
 $(BINDIR)/%.class:$(SRCDIR)/%.java
 	$(JAVAC) -d $(BINDIR)/ -cp $(BINDIR) $<
 
-CLASSES=DataManagement.class Utility.class Fitness.class City.class MersenneTwisterFast.class Configuration.class Gene.class Route.class GeneticAlgorithm.class Application.class
+CLASSES=DataManagement.class Utility.class Fitness.class City.class MersenneTwisterFast.class Configuration.class Gene.class Route.class GeneticAlgorithm.class Application.class Tune.class
 
 CLASS_FILES=$(CLASSES:%.class=$(BINDIR)/%.class)
 
@@ -19,8 +19,8 @@ default: $(CLASS_FILES)
 docs:
 	javadoc -d $(DOCDIR) $(SRCDIR)/*.java
 clean:
-	rm $(BINDIR)/molecule/*.class
+	rm $(BINDIR)/*.class
 run:
-	java -cp bin molecule.RunSimulation $(hydrogen) $(carbon)
+	java -cp bin Tune
 cleandocs:
 	rm -r docs/*

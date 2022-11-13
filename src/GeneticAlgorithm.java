@@ -1,112 +1,127 @@
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.concurrent.TimeUnit;
 
-public class GeneticAlgorithm {
+public class GeneticAlgorithm extends Thread{
     private List<Route> routes;
     private int countCrossover;
     private int countMutation;
 
+    //public static ArrayList<String> output = new ArrayList<String>();
+
+    public static Vector<String> output = new Vector<>();
+
+    private Configuration Configuration;
+
     // Reads in all Data
-    public GeneticAlgorithm() throws IOException {
-        DataManagement.readData();
+    public GeneticAlgorithm(Configuration Configuration) throws IOException {
+        this.Configuration = Configuration;
+        DataManagement.readData(Configuration);
     }
 
     // Runs evolutionary process
     public void execute() {
         routes = buildInitialPopulation();
-        evolve();
+        evolve(false);
     }
 
+    public void run(){
+        routes = buildInitialPopulation();
+        evolve(true);
+    }
     // Builds initial population
     private List<Route> buildInitialPopulation() {
         List<Route> routes = new ArrayList<>();
         List<Integer> cityIndexList = new ArrayList<>();
 
         // Count of number of cities
-        for (int i = 1; i <= Configuration.INSTANCE.countCities; i++) {
+        for (int i = 1; i <= Configuration.countCities; i++) {
             cityIndexList.add(i);
         }
 
         // Randomly add routes
-        for (int i = 0; i < Configuration.INSTANCE.populationQuantity; i++) {
-            Collections.shuffle(cityIndexList, Configuration.INSTANCE.randomGenerator);
+        for (int i = 0; i < Configuration.populationQuantity; i++) {
+            Collections.shuffle(cityIndexList, Configuration.randomGenerator);
             // Adds routes in a list divided by number of cars
-            routes.add(Route.build(cityIndexList));
+            routes.add(Route.build(cityIndexList, Configuration));
         }
 
         return routes;
     }
 
-    private void evolve() {
+    private void evolve(boolean threaded) {
         int currentGeneration = 0;
         int bestFitness = Integer.MAX_VALUE;
 
-        while (Configuration.INSTANCE.maximumCountGeneration != currentGeneration) {
+        while (Configuration.maximumCountGeneration != currentGeneration) {
             currentGeneration++;
-
-            ExecutorService executorService = Executors.newFixedThreadPool(8);
-            for (Route route : routes) {
-                executorService.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        Fitness.evaluate(route);
-                    }
-                });
+            for (Route route : routes){
+                Fitness.evaluate(route, Configuration);
             }
-            executorService.shutdown();
-            try {
-                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                System.out.println("You ducked up");
-                System.exit(1);
-            }
+//            ExecutorService executorService = Executors.newFixedThreadPool(8);
+//            for (Route route : routes) {
+//                executorService.execute(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Fitness.evaluate(route, Configuration);
+//                    }
+//                });
+//            }
+//            executorService.shutdown();
+//            try {
+//                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//            } catch (InterruptedException e) {
+//                System.out.println("You ducked up");
+//                System.exit(1);
+//            }
 
             sort(routes);
 
             // Selects 250 best chromosomes. Can actually change
 
             // Use Roulette Selection
-            List<Route> matingPool = tournamentSelect(routes, 2, Configuration.INSTANCE.truncationNumber);
+            List<Route> matingPool = tournamentSelect(routes, Configuration.tournamentSize, Configuration.truncationNumber);
             //System.out.println("Mating Pool Size: " + matingPool.size());
 
             List<Route> children = orderCrossover(matingPool);
             mutate(children);
 
             // Simply removes the 250 worst chromosomes. Can also change
-            removeLastNChromosomes(routes, (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * routes.size() * (1 / 10.0)));
+//            removeLastNChromosomes(routes, (int) (Configuration.randomGenerator.nextDouble() * routes.size() * (1 / 10.0)));
             addChildrenToPopulation(routes, children);
-
-            ExecutorService executorService2 = Executors.newFixedThreadPool(8);
-            for (Route route : routes) {
-                executorService2.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        Fitness.evaluate(route);
-                    }
-                });
+            for (Route route : routes){
+                Fitness.evaluate(route, Configuration);
             }
-            executorService2.shutdown();
-            try {
-                executorService2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                System.out.println("You ducked up");
-                System.exit(1);
-            }
+//            ExecutorService executorService2 = Executors.newFixedThreadPool(8);
+//            for (Route route : routes) {
+//                executorService2.execute(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Fitness.evaluate(route, Configuration);
+//                    }
+//                });
+//            }
+//            executorService2.shutdown();
+//            try {
+//                executorService2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//            } catch (InterruptedException e) {
+//                System.out.println("You ducked up");
+//                System.exit(1);
+//            }
 
-            if ((int) Math.round(getFittestChromosome(routes).getFitness()) < Math.round(bestFitness)) {
+
+            if ((int) Math.round(getFittestChromosome(routes).getFitness()) < Math.round(bestFitness) || currentGeneration % 1000 == 0) {
                 bestFitness = (int) Math.round(getFittestChromosome(routes).getFitness());
-                System.out.println(currentGeneration + " | bestFitness = " + (int) Math.round(getFittestChromosome(routes).getFitness()));
+                if (!threaded) {
+                    System.out.println(currentGeneration + " | bestFitness = " + (int) Math.round(getFittestChromosome(routes).getFitness()) +
+                            " | distance = " + (int) Math.round(getFittestChromosome(routes).getDistance()) +
+                            " | time penalty = " + (int) Math.round(getFittestChromosome(routes).getTimePenalty()));
+                }
             }
 
             sort(routes);
+            removeWithElitism(routes);
+            //routes = removeWorst(routes);
         }
 
         System.out.println();
@@ -119,11 +134,16 @@ public class GeneticAlgorithm {
         System.out.println();
         System.out.println();
         System.out.println("[best route]");
-        Utility.printRoute(routes.get(0), Configuration.INSTANCE.cities);
+        Utility.printRoute(routes.get(0), Configuration.cities);
 
         System.out.println();
         System.out.println("countCrossover | " + countCrossover);
         System.out.println("countMutation  | " + countMutation);
+        if (threaded){
+            output.add(Configuration.populationQuantity + ", " + Configuration.crossoverRate + ", " +
+            Configuration.mutationRate + ", " + Configuration.tournamentSize + ", " +
+            bestFitness);
+        }
     }
 
     private List<Route> select(List<Route> routes, int limit) {
@@ -136,7 +156,7 @@ public class GeneticAlgorithm {
         List<Route> outRoutes = new ArrayList<>();
         while (outRoutes.size() < limit) {
             for (int i = 0; i < k; i++) {
-                int individualIndex = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * 5);
+                int individualIndex = (int) (Configuration.randomGenerator.nextDouble() * 5);
                 if (bestFitness == 0 || routes.get(i).getFitness() > bestFitness) {
                     bestFitness = routes.get(individualIndex).getFitness();
                     bestIndividual = routes.get(individualIndex);
@@ -162,12 +182,12 @@ public class GeneticAlgorithm {
         int count = 0;
         boolean flag = true;
         while (flag){
-            double random = Configuration.INSTANCE.randomGenerator.nextDouble();
+            double random = Configuration.randomGenerator.nextDouble();
             for (Route route:routes){
                 double value = inverseFitnesses.get(count) / cumulativeFitness;
                 if (random <= value){
                     outRoutes.add(route);
-                    if (outRoutes.size() >= Configuration.INSTANCE.truncationNumber){
+                    if (outRoutes.size() >= Configuration.truncationNumber){
                         flag = false;
                         break;
                     }
@@ -184,7 +204,7 @@ public class GeneticAlgorithm {
 //        List<Route> children = new ArrayList<>();
 //
 //        for (int i = 0; i < routes.size(); i +=2) {
-//            if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.crossoverRate) {
+//            if (Configuration.randomGenerator.nextDouble() < Configuration.crossoverRate) {
 //                countCrossover++;
 //                List<Integer> parent01 = new ArrayList<>();
 //                List<Integer> parent02 = new ArrayList<>();
@@ -199,12 +219,12 @@ public class GeneticAlgorithm {
 //                }
 //
 //                // Just creates the template for the child with the 10 city buckets
-//                List<Integer> tempChild01 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
-//                List<Integer> tempChild02 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
+//                List<Integer> tempChild01 = new ArrayList<>(Collections.nCopies(Configuration.countCities, 0));
+//                List<Integer> tempChild02 = new ArrayList<>(Collections.nCopies(Configuration.countCities, 0));
 //
 //                // Two random integers
-//                int upperBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size());
-//                int lowerBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size() - 1);
+//                int upperBound = Configuration.randomGenerator.nextInt(parent01.size());
+//                int lowerBound = Configuration.randomGenerator.nextInt(parent01.size() - 1);
 //
 //                // Essentially actually get upper and lower bound
 //                int start = Math.min(upperBound, lowerBound);
@@ -225,7 +245,7 @@ public class GeneticAlgorithm {
 //
 //                int index = 0;
 //                for (int z = 0; z < parent01.size(); z++) {
-//                    index = (end + z) % (Configuration.INSTANCE.countCities);
+//                    index = (end + z) % (Configuration.countCities);
 //                    tempChild01.set(index, parent02.get(z));
 //                    tempChild02.set(index, parent01.get(z));
 //                }
@@ -245,7 +265,7 @@ public class GeneticAlgorithm {
         List<Route> children = new ArrayList<>();
 
         for (int i = 0; i < routes.size(); i += 2) {
-            if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.crossoverRate) {
+            if (Configuration.randomGenerator.nextDouble() < Configuration.crossoverRate) {
                 countCrossover++;
 
                 List<Integer> parent01 = new ArrayList<>();
@@ -263,8 +283,8 @@ public class GeneticAlgorithm {
                 List<Integer> child02 = new ArrayList<>();
 
                 //crossover points
-                int crossPoint1 = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * Configuration.INSTANCE.countCities);
-                int crossPoint2 = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * Configuration.INSTANCE.countCities);
+                int crossPoint1 = (int) (Configuration.randomGenerator.nextDouble() * Configuration.countCities);
+                int crossPoint2 = (int) (Configuration.randomGenerator.nextDouble() * Configuration.countCities);
 
                 //order cross points
                 if (crossPoint1 > crossPoint2) {
@@ -306,8 +326,8 @@ public class GeneticAlgorithm {
                 //i.e, the start of the children (the original segment) is shifted to the index of the first cross over
                 Collections.rotate(child01, crossPoint1);
                 Collections.rotate(child02, crossPoint1);
-                Route child01CityRoute = Route.build(child01);
-                Route child02CityRoute = Route.build(child02);
+                Route child01CityRoute = Route.build(child01, Configuration);
+                Route child02CityRoute = Route.build(child02, Configuration);
                 children.add(child02CityRoute);
                 children.add(child01CityRoute);
             }
@@ -319,7 +339,7 @@ public class GeneticAlgorithm {
         List<Route> children = new ArrayList<>();
 
         for (int i = 0; i < routes.size(); i += 2) {
-            if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.crossoverRate) {
+            if (Configuration.randomGenerator.nextDouble() < Configuration.crossoverRate) {
                 countCrossover++;
 
                 List<Integer> parent01 = new ArrayList<>();
@@ -335,12 +355,12 @@ public class GeneticAlgorithm {
                 }
 
                 // Just creates the template for the child with the 10 city buckets
-                List<Integer> tempChild01 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
-                List<Integer> tempChild02 = new ArrayList<>(Collections.nCopies(Configuration.INSTANCE.countCities, 0));
+                List<Integer> tempChild01 = new ArrayList<>(Collections.nCopies(Configuration.countCities, 0));
+                List<Integer> tempChild02 = new ArrayList<>(Collections.nCopies(Configuration.countCities, 0));
 
                 // Two random integers
-                int upperBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size());
-                int lowerBound = Configuration.INSTANCE.randomGenerator.nextInt(parent01.size() - 1);
+                int upperBound = Configuration.randomGenerator.nextInt(parent01.size());
+                int lowerBound = Configuration.randomGenerator.nextInt(parent01.size() - 1);
 
                 // Essentially actually get upper and lower bound
                 int start = Math.min(upperBound, lowerBound);
@@ -364,8 +384,8 @@ public class GeneticAlgorithm {
                     tempChild02.set(tempChild02.indexOf(0), parent01.get(z));
                 }
 
-                Route child01CityRoute = Route.build(tempChild01);
-                Route child02CityRoute = Route.build(tempChild02);
+                Route child01CityRoute = Route.build(tempChild01, Configuration);
+                Route child02CityRoute = Route.build(tempChild02, Configuration);
 
                 children.add(child01CityRoute);
                 children.add(child02CityRoute);
@@ -388,18 +408,18 @@ public class GeneticAlgorithm {
 
             // All the single city integers in the current chromosomes
             for (Integer city : currentChromosome) {
-                if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.mutationRate) {
+                if (Configuration.randomGenerator.nextDouble() < Configuration.mutationRate) {
                     countMutation++;
                     int tempIndex = currentChromosome.indexOf(city);
                     int tempValue = city;
-                    int indexToSwap = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * Configuration.INSTANCE.countCities);
+                    int indexToSwap = (int) (Configuration.randomGenerator.nextDouble() * Configuration.countCities);
                     int valueToSwap = currentChromosome.get(indexToSwap);
                     currentChromosome.set(tempIndex, valueToSwap);
                     currentChromosome.set(indexToSwap, tempValue);
                 }
             }
 
-            Route mutatedRoute = Route.build(currentChromosome);
+            Route mutatedRoute = Route.build(currentChromosome, Configuration);
             routes.add(mutatedRoute);
         }
     }
@@ -416,13 +436,13 @@ public class GeneticAlgorithm {
 
             // All the single city integers in the current chromosomes
             for (Integer city : currentChromosome) {
-                if (Configuration.INSTANCE.randomGenerator.nextDouble() < Configuration.INSTANCE.mutationRate) {
+                if (Configuration.randomGenerator.nextDouble() < Configuration.mutationRate) {
                     countMutation++;
-//                    int moveOverValue = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() * 50);
+//                    int moveOverValue = (int) (Configuration.randomGenerator.nextDouble() * 50);
 //                    int startIndex = currentChromosome.indexOf(city);
 //                    int endIndex = startIndex+moveOverValue;
-                    int startIndex = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() + currentChromosome.size());
-                    int endIndex = (int) (Configuration.INSTANCE.randomGenerator.nextDouble() + currentChromosome.size());
+                    int startIndex = (int) (Configuration.randomGenerator.nextDouble() + currentChromosome.size());
+                    int endIndex = (int) (Configuration.randomGenerator.nextDouble() + currentChromosome.size());
                     int tempIndex = 0;
                     if (startIndex > endIndex){
                         tempIndex = startIndex;
@@ -442,7 +462,7 @@ public class GeneticAlgorithm {
                 }
             }
 
-            Route mutatedRoute = Route.build(currentChromosome);
+            Route mutatedRoute = Route.build(currentChromosome, Configuration);
             routes.add(mutatedRoute);
         }
     }
@@ -458,11 +478,24 @@ public class GeneticAlgorithm {
 
     private void removeLastNChromosomes(List<Route> population, int n) {
         for (int i = 0; i < n; i++) {
-            int indexToRemove = (int) ((population.size() - n) + Configuration.INSTANCE.randomGenerator.nextDouble() * n);
+            int indexToRemove = (int) ((population.size() - n) + Configuration.randomGenerator.nextDouble() * n);
             population.remove(indexToRemove);
         }
     }
+    // Assumes ordered genomes
+    private void removeWithElitism(List<Route> population) {
+        int elites = (int) (Configuration.populationQuantity * Configuration.elitism);
+        int numberToRemove = population.size() - Configuration.populationQuantity;
+        for (int i = 0; i <= numberToRemove; i ++){
+            int random = (int)(Configuration.randomGenerator.nextDouble() * (population.size() - numberToRemove) + numberToRemove);
+            population.remove(random);
+        }
+    }
 
+    // Assumes sorted Routes
+    private List<Route> removeWorst(List<Route> population){
+        return population.subList(0, Configuration.populationQuantity);
+    }
     private void sort(List<Route> routes) {
         routes.sort(Comparator.comparing(Route::getFitness));
     }
