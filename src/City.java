@@ -1,7 +1,20 @@
 import java.util.List;
 
 // Creates city records with the name, demand and
-public record City(List<Double> coordinates, int demand, String name,  int readyTime, int dueDate, int serviceTime) {
+public class City {
+    List<Double> coordinates;
+    int demand;
+    String name;
+    int readyTime;
+    int dueDate;
+    int serviceTime;
+    public City(List<Double> coordinates, int demand, String name,  int readyTime, int dueDate, int serviceTime){
+        this.coordinates=coordinates;
+        this.demand = demand;
+        this.readyTime = readyTime;
+        this.dueDate = dueDate;
+        this.serviceTime = serviceTime;
+    }
     public String getName() {
         return name;
     }
@@ -13,17 +26,17 @@ public record City(List<Double> coordinates, int demand, String name,  int ready
     public int getDemand() {
         return demand;
     }
-    @Override
+
     public int readyTime() {
         return readyTime;
     }
 
-    @Override
+
     public int dueDate() {
         return dueDate;
     }
 
-    @Override
+
     public int serviceTime() {
         return serviceTime;
     }

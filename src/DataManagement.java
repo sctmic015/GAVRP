@@ -21,7 +21,7 @@ public class DataManagement {
         String cityName = "depot";
         double demandSum = 0;
         while ((line = br.readLine())!= null){
-            String[] info = line.split("\s+");
+            String[] info = line.split("\\s+");
             System.out.println(Arrays.toString(info));
             List<Double> coordinatesXY = new ArrayList<>();
             coordinatesXY.add(Double.parseDouble(info[2]));
